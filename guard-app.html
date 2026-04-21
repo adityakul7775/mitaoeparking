@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MIT AOE Parking — Security Guard Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --navy: #070b14;
+    --navy2: #0d1220;
+    --navy3: #131b2e;
+    --navy4: #1a2438;
+    --navy5: #202d45;
+    --red-accent: #ef4444;
+    --red-soft: rgba(239,68,68,0.12);
+    --green: #22c55e;
+    --green-soft: rgba(34,197,94,0.12);
+    --orange: #f97316;
+    --orange-soft: rgba(249,115,22,0.12);
+    --blue: #3b82f6;
+    --blue-soft: rgba(59,130,246,0.12);
+    --cyan: #06b6d4;
+    --cyan-soft: rgba(6,182,212,0.12);
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.1);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::after {
+    content:'';
+    position:fixed;
+    bottom:-200px; right:-100px;
+    width:500px; height:500px;
+    background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%);
+    pointer-events:none; z-index:0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position:sticky; top:0; z-index:100;
+    background: rgba(7,11,20,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display:flex; align-items:center; justify-content:space-between;
+    height:64px;
+  }
+  .nav-brand { display:flex; align-items:center; gap:10px; }
+  .nav-logo {
+    width:38px; height:38px; border-radius:10px;
+    background: var(--blue); display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-weight:800; font-size:14px; color:#fff;
+  }
+  .nav-title { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color:var(--text); }
+  .nav-sub { font-size:11px; color:var(--text2); margin-top:1px; }
+  .nav-right { display:flex; align-items:center; gap:10px; }
+  .live-badge {
+    display:flex; align-items:center; gap:5px;
+    background:var(--green-soft); border:1px solid var(--green);
+    border-radius:20px; padding:4px 10px;
+    font-size:11px; color:var(--green);
+  }
+  .live-dot {
+    width:6px; height:6px; border-radius:50%; background:var(--green);
+    animation: blink 1.5s ease infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+  .btn-logout {
+    padding:6px 14px; border-radius:8px;
+    border:1px solid var(--border2); background:transparent;
+    color:var(--text2); font-size:12px; cursor:pointer; transition:all .2s;
+  }
+  .btn-logout:hover { border-color:var(--red-accent); color:var(--red-accent); }
+
+  /* ── SCREENS ── */
+  .screen { display:none; }
+  .screen.active { display:block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+
+  /* ── LOGIN ── */
+  #screen-login { min-height:100vh; }
+  #screen-login.active { display:flex; flex-direction:column; }
+  .login-hero {
+    flex:1; display:flex; align-items:center; justify-content:center;
+    padding:40px 24px; position:relative;
+  }
+  .grid-bg {
+    position:absolute; inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(59,130,246,0.04) 60px, rgba(59,130,246,0.04) 61px),
+      repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(59,130,246,0.04) 60px, rgba(59,130,246,0.04) 61px);
+    pointer-events:none;
+  }
+  .login-card {
+    width:100%; max-width:400px;
+    background:var(--navy3); border:1px solid var(--border2);
+    border-radius:24px; padding:40px 36px; position:relative; z-index:1;
+    box-shadow:0 40px 80px rgba(0,0,0,.6);
+  }
+  .guard-icon {
+    width:60px; height:60px; border-radius:16px;
+    background:var(--blue); display:flex; align-items:center; justify-content:center;
+    font-size:26px; margin-bottom:20px;
+  }
+  .login-card h1 { font-family:'Syne',sans-serif; font-weight:800; font-size:26px; color:var(--text); margin-bottom:6px; }
+  .login-card p { font-size:14px; color:var(--text2); margin-bottom:28px; }
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:12px; font-weight:500; color:var(--text2); margin-bottom:6px; letter-spacing:.5px; text-transform:uppercase; }
+  .field input {
+    width:100%; padding:12px 16px;
+    background:var(--navy4); border:1px solid var(--border2);
+    border-radius:var(--radius-sm); color:var(--text); font-size:14px;
+    font-family:'DM Sans',sans-serif; outline:none; transition:border-color .2s;
+  }
+  .field input:focus { border-color:var(--blue); }
+  .btn-primary {
+    width:100%; padding:13px; border-radius:var(--radius-sm);
+    background:var(--blue); color:#fff;
+    font-family:'Syne',sans-serif; font-weight:700; font-size:15px;
+    border:none; cursor:pointer; transition:all .2s; margin-top:8px;
+  }
+  .btn-primary:hover { background:#2563eb; transform:translateY(-1px); }
+  .error-msg { background:var(--red-soft); border:1px solid var(--red-accent); border-radius:8px; padding:10px 14px; font-size:13px; color:var(--red-accent); margin-bottom:14px; display:none; }
+  .error-msg.show { display:block; }
+  .default-creds { background:var(--cyan-soft); border:1px solid var(--cyan); border-radius:8px; padding:10px 14px; font-size:12px; color:var(--cyan); margin-top:12px; line-height:1.6; }
+
+  /* ── APP ── */
+  .app-container { max-width:960px; margin:0 auto; padding:28px 20px 80px; }
+
+  /* ── TABS ── */
+  .tab-bar {
+    display:flex; gap:4px; background:var(--navy3); border:1px solid var(--border);
+    border-radius:12px; padding:4px; margin-bottom:24px;
+  }
+  .tab-btn {
+    flex:1; padding:9px 16px; border-radius:9px; border:none; background:transparent;
+    color:var(--text2); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500;
+    cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .tab-btn.active { background:var(--blue); color:#fff; }
+  .tab-count {
+    background:rgba(255,255,255,0.2); border-radius:10px;
+    padding:1px 7px; font-size:11px;
+  }
+  .tab-btn:not(.active) .tab-count { background:var(--navy5); color:var(--text3); }
+
+  /* ── STATS ── */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+  .stat-card {
+    background:var(--navy3); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px 14px;
+    position:relative; overflow:hidden; transition:transform .2s;
+  }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .stat-card.blue::before { background:var(--blue); }
+  .stat-card.green::before { background:var(--green); }
+  .stat-card.orange::before { background:var(--orange); }
+  .stat-card.red::before { background:var(--red-accent); }
+  .stat-card:hover { transform:translateY(-2px); }
+  .stat-num { font-family:'Syne',sans-serif; font-weight:800; font-size:26px; margin-bottom:4px; }
+  .stat-card.blue .stat-num { color:var(--blue); }
+  .stat-card.green .stat-num { color:var(--green); }
+  .stat-card.orange .stat-num { color:var(--orange); }
+  .stat-card.red .stat-num { color:var(--red-accent); }
+  .stat-lbl { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-family:'Syne',sans-serif; font-weight:600; font-size:13px;
+    color:var(--text2); letter-spacing:.5px; text-transform:uppercase;
+    margin-bottom:12px; display:flex; align-items:center; gap:8px;
+  }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* ── SLOT GRID ── */
+  .slot-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:24px; }
+  .slot-tile {
+    background:var(--navy3); border-radius:10px;
+    padding:10px 6px; text-align:center;
+    border:1px solid var(--border); transition:all .2s;
+    min-height:72px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:3px;
+    position:relative; overflow:hidden;
+  }
+  .slot-tile::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .slot-tile.available::before { background:var(--green); }
+  .slot-tile.pending { border-color:rgba(249,115,22,.4); cursor:pointer; }
+  .slot-tile.pending::before { background:var(--orange); animation:glow .8s ease infinite alternate; }
+  @keyframes glow { from{opacity:.6;} to{opacity:1;} }
+  .slot-tile.pending:hover { background:var(--orange-soft); transform:translateY(-2px); box-shadow:0 4px 20px rgba(249,115,22,.2); }
+  .slot-tile.reserved::before { background:var(--red-accent); }
+  .slot-tile.reserved { border-color:rgba(239,68,68,.3); }
+  .slot-id { font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:var(--text); }
+  .slot-dot { width:7px; height:7px; border-radius:50%; }
+  .slot-tile.available .slot-dot { background:var(--green); }
+  .slot-tile.pending .slot-dot { background:var(--orange); animation:blink 1s infinite; }
+  .slot-tile.reserved .slot-dot { background:var(--red-accent); }
+  .slot-vehicle { font-size:13px; }
+  .slot-tap { font-size:9px; color:var(--orange); font-weight:500; }
+
+  /* ── PENDING CARDS ── */
+  .pending-card {
+    background:var(--navy3); border:1px solid var(--border2);
+    border-radius:16px; padding:18px 20px; margin-bottom:12px;
+    display:flex; align-items:center; gap:16px;
+    transition:all .2s; position:relative; overflow:hidden;
+    border-left:3px solid var(--orange);
+  }
+  .pending-card::before {
+    content:''; position:absolute; top:0; left:0; bottom:0; width:3px;
+    background:var(--orange);
+  }
+  .slot-badge {
+    min-width:52px; height:52px; border-radius:12px;
+    background:var(--orange-soft); border:1px solid var(--orange);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-weight:800; font-size:12px;
+    color:var(--orange); text-align:center; line-height:1.2;
+  }
+  .pending-info { flex:1; }
+  .pending-name { font-family:'Syne',sans-serif; font-weight:600; font-size:14px; color:var(--text); margin-bottom:3px; }
+  .pending-meta { font-size:12px; color:var(--text2); margin-bottom:5px; }
+  .pending-timer { font-size:12px; }
+  .pending-timer.urgent { color:var(--red-accent); font-weight:600; }
+  .pending-timer.normal { color:var(--orange); }
+  .btn-reserve {
+    padding:9px 18px; border-radius:9px;
+    background:var(--green); color:#fff;
+    font-family:'Syne',sans-serif; font-weight:700; font-size:13px;
+    border:none; cursor:pointer; transition:all .2s; white-space:nowrap;
+  }
+  .btn-reserve:hover { background:#16a34a; transform:translateY(-1px); }
+  .btn-reserve:active { transform:translateY(0); }
+
+  /* ── RESERVED CARDS ── */
+  .reserved-card {
+    background:var(--navy3); border:1px solid var(--border);
+    border-radius:16px; padding:16px 20px; margin-bottom:10px;
+    display:flex; align-items:center; gap:14px;
+    border-left:3px solid var(--red-accent);
+  }
+  .reserved-badge {
+    min-width:48px; height:48px; border-radius:10px;
+    background:var(--red-soft); border:1px solid var(--red-accent);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-weight:800; font-size:11px;
+    color:var(--red-accent); text-align:center;
+  }
+  .btn-release {
+    padding:7px 14px; border-radius:8px;
+    background:transparent; border:1px solid var(--red-accent);
+    color:var(--red-accent); font-size:12px; cursor:pointer; transition:all .2s;
+  }
+  .btn-release:hover { background:var(--red-soft); }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align:center; padding:60px 20px; }
+  .empty-icon { font-size:48px; margin-bottom:14px; }
+  .empty h3 { font-family:'Syne',sans-serif; font-weight:700; font-size:18px; color:var(--text); margin-bottom:8px; }
+  .empty p { font-size:14px; color:var(--text2); }
+
+  /* ── TOAST ── */
+  .toast {
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--navy3); border:1px solid var(--border2);
+    border-radius:10px; padding:12px 20px;
+    font-size:13px; color:var(--text); z-index:999;
+    opacity:0; transition:all .3s; pointer-events:none;
+    white-space:nowrap; box-shadow:0 8px 32px rgba(0,0,0,.5);
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.success { border-color:var(--green); color:var(--green); }
+  .toast.error { border-color:var(--red-accent); color:var(--red-accent); }
+  .toast.info { border-color:var(--blue); color:var(--blue); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,.75);
+    z-index:200; display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background:var(--navy3); border:1px solid var(--border2);
+    border-radius:20px; padding:28px; max-width:380px; width:100%;
+    box-shadow:0 40px 80px rgba(0,0,0,.6);
+  }
+  .modal h3 { font-family:'Syne',sans-serif; font-weight:700; font-size:18px; margin-bottom:6px; color:var(--text); }
+  .modal p { font-size:13px; color:var(--text2); margin-bottom:20px; }
+  .modal-slot-id { font-family:'Syne',sans-serif; font-weight:800; font-size:32px; color:var(--orange); margin-bottom:6px; }
+  .modal-rows { margin-bottom:20px; }
+  .modal-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .modal-row:last-child { border:none; }
+  .modal-key { color:var(--text3); }
+  .modal-val { color:var(--text); font-weight:500; }
+  .modal-actions { display:flex; gap:10px; }
+  .btn-modal-cancel { flex:1; padding:11px; border-radius:9px; border:1px solid var(--border2); background:transparent; color:var(--text2); font-size:14px; cursor:pointer; transition:all .2s; }
+  .btn-modal-cancel:hover { border-color:var(--text); color:var(--text); }
+  .btn-modal-confirm { flex:1; padding:11px; border-radius:9px; border:none; background:var(--green); color:#fff; font-family:'Syne',sans-serif; font-weight:700; font-size:14px; cursor:pointer; transition:all .2s; }
+  .btn-modal-confirm:hover { background:#16a34a; }
+
+  /* ── LOADING ── */
+  .loading-overlay {
+    position:fixed; inset:0; background:rgba(7,11,20,.95);
+    display:flex; align-items:center; justify-content:center; z-index:300;
+    flex-direction:column; gap:16px;
+  }
+  .loading-overlay.hidden { display:none; }
+  .spinner { width:40px; height:40px; border:3px solid var(--border2); border-top-color:var(--blue); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg);} }
+  .loading-text { font-size:14px; color:var(--text2); }
+
+  /* ── PROFILE GUARD ── */
+  .guard-profile-card {
+    background:var(--navy3); border:1px solid var(--border2);
+    border-radius:20px; padding:28px; text-align:center; margin-bottom:16px;
+  }
+  .guard-avatar {
+    width:72px; height:72px; border-radius:50%;
+    background:var(--blue); display:flex; align-items:center; justify-content:center;
+    font-size:28px; margin:0 auto 14px;
+  }
+
+  @media(max-width:480px) {
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .slot-grid { grid-template-columns:repeat(4,1fr); }
+    .login-card { padding:28px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading Guard Portal...</div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3>Confirm Reservation</h3>
+    <p>Mark this slot as reserved for the following student?</p>
+    <div class="modal-slot-id" id="modalSlotId">A-01</div>
+    <div class="modal-rows" id="modalRows"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-confirm" onclick="confirmReserve()">Mark Reserved ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen active" id="screen-login">
+  <nav>
+    <div class="nav-brand">
+      <div class="nav-logo">🛡</div>
+      <div><div class="nav-title">MIT AOE Parking</div><div class="nav-sub">Security Guard Portal</div></div>
+    </div>
+  </nav>
+  <div class="login-hero">
+    <div class="grid-bg"></div>
+    <div class="login-card">
+      <div class="guard-icon">🛡️</div>
+      <h1>Guard Login</h1>
+      <p>Sign in with your security credentials to manage parking slots.</p>
+      <div class="error-msg" id="loginError"></div>
+      <div class="field"><label>Guard ID</label><input type="text" id="loginId" placeholder="e.g. GUARD001"/></div>
+      <div class="field"><label>Password</label><input type="password" id="loginPass" placeholder="Enter password"/></div>
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="default-creds">
+        <strong>Default credentials:</strong><br/>
+        Guard ID: <code>GUARD001</code> &nbsp;|&nbsp; Password: <code>guard123</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen" id="screen-app">
+  <nav>
+    <div class="nav-brand">
+      <div class="nav-logo">🛡</div>
+      <div><div class="nav-title">MIT AOE Parking</div><div class="nav-sub">Security Guard Portal</div></div>
+    </div>
+    <div class="nav-right">
+      <div class="live-badge"><div class="live-dot"></div>Live</div>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="app-container">
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card blue"><div class="stat-num" id="statTotal">20</div><div class="stat-lbl">Total Slots</div></div>
+      <div class="stat-card green"><div class="stat-num" id="statAvail">—</div><div class="stat-lbl">Available</div></div>
+      <div class="stat-card orange"><div class="stat-num" id="statPend">—</div><div class="stat-lbl">Pending</div></div>
+      <div class="stat-card red"><div class="stat-num" id="statRes">—</div><div class="stat-lbl">Reserved</div></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('overview')" id="tab-overview">
+        🅿️ Slot Overview
+      </button>
+      <button class="tab-btn" onclick="switchTab('pending')" id="tab-pending">
+        ⏳ Pending <span class="tab-count" id="pendingCount">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('reserved')" id="tab-reserved">
+        ✅ Reserved <span class="tab-count" id="reservedCount">0</span>
+      </button>
+    </div>
+
+    <!-- OVERVIEW TAB -->
+    <div id="tab-overview-content">
+      <div class="section-title">Live Parking Map</div>
+      <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);"><div style="width:10px;height:10px;border-radius:2px;background:var(--green);"></div>Available</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);"><div style="width:10px;height:10px;border-radius:2px;background:var(--orange);"></div>Pending (tap to reserve)</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);"><div style="width:10px;height:10px;border-radius:2px;background:var(--red-accent);"></div>Reserved</div>
+      </div>
+      <div class="slot-grid" id="overviewGrid"></div>
+    </div>
+
+    <!-- PENDING TAB -->
+    <div id="tab-pending-content" style="display:none;">
+      <div id="pendingList"></div>
+    </div>
+
+    <!-- RESERVED TAB -->
+    <div id="tab-reserved-content" style="display:none;">
+      <div id="reservedList"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ── FIREBASE CONFIG — Replace with your own ──
+const firebaseConfig = {
+
+  apiKey: "AIzaSyCelnCKU9JBCz1CUf_NviiW1KWUXB8Za3M",
+  authDomain: "mitaoe-parking.firebaseapp.com",
+  projectId: "mitaoe-parking",
+  storageBucket: "mitaoe-parking.firebasestorage.app",
+  messagingSenderId: "875899575922",
+  appId: "1:875899575922:web:1cd7ec6adc6f0edfa92ceb",
+  measurementId: "G-ER04PZ7NKN"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const TOTAL = 20;
+const TIMEOUT = 600;
+let slotsData = {};
+let pendingSlotToReserve = null;
+let currentGuard = null;
+let currentTab = 'overview';
+let timerDisplays = {};
+
+// ── GUARD ACCOUNTS (stored in Firebase) ──
+const defaultGuards = {
+  'GUARD001': { name: 'Ramesh Kumar', badge: 'RK', password: 'guard123', shift: 'Morning (7AM–3PM)' },
+  'GUARD002': { name: 'Suresh Patil', badge: 'SP', password: 'guard456', shift: 'Evening (3PM–9PM)' }
+};
+
+window.addEventListener('load', async () => {
+  const saved = localStorage.getItem('mitaoe_guard');
+  if (saved) {
+    currentGuard = JSON.parse(saved);
+    showApp();
+  }
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  initSlotsListener();
+  ensureGuardsExist();
+});
+
+async function ensureGuardsExist() {
+  for (const [id, data] of Object.entries(defaultGuards)) {
+    const snap = await get(ref(db, 'guards/' + id));
+    if (!snap.exists()) await set(ref(db, 'guards/' + id), data);
+  }
+}
+
+function initSlotsListener() {
+  onValue(ref(db, 'slots'), snap => {
+    slotsData = snap.val() || {};
+    renderAll();
+    checkExpiredSlots();
+  });
+}
+
+async function checkExpiredSlots() {
+  const now = Date.now();
+  for (const [id, slot] of Object.entries(slotsData)) {
+    if (slot.status === 'pending' && slot.booked_at) {
+      const elapsed = Math.floor((now - slot.booked_at) / 1000);
+      if (elapsed >= TIMEOUT) {
+        await update(ref(db, 'slots/' + id), { status:'available', student:null, college_id:null, vehicle:null, vehicle_type:null, booked_at:null });
+      }
+    }
+  }
+}
+
+// ── AUTH ──
+window.doLogin = async () => {
+  const id = document.getElementById('loginId').value.trim().toUpperCase();
+  const pass = document.getElementById('loginPass').value.trim();
+  const errEl = document.getElementById('loginError');
+  errEl.classList.remove('show');
+  if (!id || !pass) { errEl.textContent='Please fill all fields.'; errEl.classList.add('show'); return; }
+  try {
+    const snap = await get(ref(db, 'guards/' + id));
+    if (!snap.exists()) { errEl.textContent='Guard ID not found.'; errEl.classList.add('show'); return; }
+    const guard = snap.val();
+    if (guard.password !== pass) { errEl.textContent='Incorrect password.'; errEl.classList.add('show'); return; }
+    currentGuard = { ...guard, guard_id: id };
+    localStorage.setItem('mitaoe_guard', JSON.stringify(currentGuard));
+    showApp();
+  } catch(e) {
+    errEl.textContent = 'Connection error. Check Firebase config.';
+    errEl.classList.add('show');
+  }
+};
+
+window.doLogout = () => {
+  localStorage.removeItem('mitaoe_guard');
+  currentGuard = null;
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+};
+
+function showApp() {
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+}
+
+// ── RENDER ──
+function renderAll() {
+  updateStats();
+  renderOverviewGrid();
+  if (currentTab === 'pending') renderPendingList();
+  if (currentTab === 'reserved') renderReservedList();
+  updateTabCounts();
+}
+
+function updateStats() {
+  let a=0,p=0,r=0;
+  Object.values(slotsData).forEach(s => {
+    if (s.status==='available') a++;
+    else if (s.status==='pending') p++;
+    else r++;
+  });
+  document.getElementById('statAvail').textContent = a;
+  document.getElementById('statPend').textContent = p;
+  document.getElementById('statRes').textContent = r;
+}
+
+function updateTabCounts() {
+  const p = Object.values(slotsData).filter(s => s.status==='pending').length;
+  const r = Object.values(slotsData).filter(s => s.status==='reserved').length;
+  document.getElementById('pendingCount').textContent = p;
+  document.getElementById('reservedCount').textContent = r;
+}
+
+function renderOverviewGrid() {
+  const grid = document.getElementById('overviewGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 1; i <= TOTAL; i++) {
+    const id = 'A' + String(i).padStart(2,'0');
+    const slot = slotsData[id] || { status:'available' };
+    const div = document.createElement('div');
+    div.className = `slot-tile ${slot.status}`;
+    const vIcon = slot.vehicle_type === 'Four-Wheeler' ? '🚗' : (slot.status !== 'available' ? '🛵' : '');
+    div.innerHTML = `
+      <div class="slot-id">${id}</div>
+      <div class="slot-dot"></div>
+      ${vIcon ? `<div class="slot-vehicle">${vIcon}</div>` : ''}
+      ${slot.status === 'pending' ? `<div class="slot-tap">Tap</div>` : ''}
+    `;
+    if (slot.status === 'pending') div.onclick = () => openModal(id, slot);
+    grid.appendChild(div);
+  }
+}
+
+function renderPendingList() {
+  const list = document.getElementById('pendingList');
+  if (!list) return;
+  const pending = Object.entries(slotsData).filter(([,s]) => s.status==='pending');
+  if (!pending.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><h3>No Pending Arrivals</h3><p>All students have arrived or there are no active bookings.</p></div>`;
+    return;
+  }
+  list.innerHTML = '';
+  pending.forEach(([id, slot]) => {
+    const card = document.createElement('div');
+    card.className = 'pending-card';
+    const elapsed = slot.booked_at ? Math.floor((Date.now()-slot.booked_at)/1000) : 0;
+    const remaining = Math.max(0, TIMEOUT - elapsed);
+    const mins = Math.floor(remaining/60);
+    const secs = remaining%60;
+    const timerClass = remaining < 120 ? 'urgent' : 'normal';
+    const dt = slot.booked_at ? new Date(slot.booked_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : '—';
+    card.innerHTML = `
+      <div class="slot-badge">${id}</div>
+      <div class="pending-info">
+        <div class="pending-name">${slot.student || '—'}</div>
+        <div class="pending-meta">ID: ${slot.college_id || '—'} &nbsp;|&nbsp; ${slot.vehicle_type||''}: ${slot.vehicle||'—'}</div>
+        <div class="pending-timer ${timerClass}" id="ptimer-${id}">⏱ ${mins}:${String(secs).padStart(2,'0')} remaining &nbsp;|&nbsp; Booked at ${dt}</div>
+      </div>
+      <button class="btn-reserve" onclick="openModal('${id}', ${JSON.stringify(slot).replace(/"/g,'&quot;')})">Mark Reserved</button>
+    `;
+    list.appendChild(card);
+  });
+  startPendingTimers(pending);
+}
+
+function startPendingTimers(pending) {
+  pending.forEach(([id, slot]) => {
+    setInterval(() => {
+      const el = document.getElementById('ptimer-'+id);
+      if (!el) return;
+      const elapsed = slot.booked_at ? Math.floor((Date.now()-slot.booked_at)/1000) : 0;
+      const remaining = Math.max(0, TIMEOUT - elapsed);
+      const mins = Math.floor(remaining/60);
+      const secs = remaining%60;
+      el.textContent = `⏱ ${mins}:${String(secs).padStart(2,'0')} remaining`;
+      el.className = `pending-timer ${remaining<120?'urgent':'normal'}`;
+    }, 1000);
+  });
+}
+
+function renderReservedList() {
+  const list = document.getElementById('reservedList');
+  if (!list) return;
+  const reserved = Object.entries(slotsData).filter(([,s]) => s.status==='reserved');
+  if (!reserved.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">🅿️</div><h3>No Reserved Slots</h3><p>No slots are currently reserved.</p></div>`;
+    return;
+  }
+  list.innerHTML = '';
+  reserved.forEach(([id, slot]) => {
+    const card = document.createElement('div');
+    card.className = 'reserved-card';
+    card.innerHTML = `
+      <div class="reserved-badge">${id}</div>
+      <div style="flex:1;">
+        <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:14px;color:var(--text);margin-bottom:3px;">${slot.student||'—'}</div>
+        <div style="font-size:12px;color:var(--text2);">ID: ${slot.college_id||'—'} &nbsp;|&nbsp; ${slot.vehicle_type||''}: ${slot.vehicle||'—'}</div>
+      </div>
+      <button class="btn-release" onclick="releaseSlot('${id}')">Release</button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// ── MODAL ──
+window.openModal = (slotId, slot) => {
+  pendingSlotToReserve = slotId;
+  document.getElementById('modalSlotId').textContent = slotId;
+  const dt = slot.booked_at ? new Date(slot.booked_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : '—';
+  document.getElementById('modalRows').innerHTML = `
+    <div class="modal-row"><span class="modal-key">Student</span><span class="modal-val">${slot.student||'—'}</span></div>
+    <div class="modal-row"><span class="modal-key">College ID</span><span class="modal-val">${slot.college_id||'—'}</span></div>
+    <div class="modal-row"><span class="modal-key">Vehicle</span><span class="modal-val">${slot.vehicle||'—'}</span></div>
+    <div class="modal-row"><span class="modal-key">Type</span><span class="modal-val">${slot.vehicle_type||'—'}</span></div>
+    <div class="modal-row"><span class="modal-key">Booked At</span><span class="modal-val">${dt}</span></div>
+  `;
+  document.getElementById('confirmModal').classList.add('open');
+};
+
+window.closeModal = () => {
+  document.getElementById('confirmModal').classList.remove('open');
+  pendingSlotToReserve = null;
+};
+
+window.confirmReserve = async () => {
+  if (!pendingSlotToReserve) return;
+  const slotId = pendingSlotToReserve;
+  closeModal();
+  await update(ref(db, 'slots/' + slotId), { status: 'reserved' });
+  showToast(`Slot ${slotId} marked as reserved!`, 'success');
+};
+
+window.releaseSlot = async (slotId) => {
+  await update(ref(db, 'slots/'+slotId), { status:'available', student:null, college_id:null, vehicle:null, vehicle_type:null, booked_at:null });
+  showToast(`Slot ${slotId} released.`, 'info');
+};
+
+// ── TABS ──
+window.switchTab = (tab) => {
+  currentTab = tab;
+  ['overview','pending','reserved'].forEach(t => {
+    document.getElementById('tab-'+t+'-content').style.display = t===tab ? 'block' : 'none';
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='pending') renderPendingList();
+  if (tab==='reserved') renderReservedList();
+};
+
+// ── UTILS ──
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className='toast', 3000);
+}
+</script>
+</body>
+</html>

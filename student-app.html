@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MIT AOE Parking — Student Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --navy: #0a0e1a;
+    --navy2: #111827;
+    --navy3: #1c2333;
+    --navy4: #232d42;
+    --gold: #f5c842;
+    --gold2: #e6b820;
+    --gold-soft: rgba(245,200,66,0.12);
+    --gold-glow: rgba(245,200,66,0.25);
+    --green: #22c55e;
+    --green-soft: rgba(34,197,94,0.15);
+    --orange: #f97316;
+    --orange-soft: rgba(249,115,22,0.15);
+    --red: #ef4444;
+    --red-soft: rgba(239,68,68,0.15);
+    --blue: #3b82f6;
+    --blue-soft: rgba(59,130,246,0.15);
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content:'';
+    position:fixed;
+    top:-200px; left:-200px;
+    width:600px; height:600px;
+    background: radial-gradient(circle, rgba(245,200,66,0.06) 0%, transparent 70%);
+    pointer-events:none; z-index:0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top:0; z-index:100;
+    background: rgba(10,14,26,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .nav-brand { display:flex; align-items:center; gap:10px; }
+  .nav-logo {
+    width:38px; height:38px; border-radius:10px;
+    background: var(--gold); display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-weight:800; font-size:16px; color:var(--navy);
+  }
+  .nav-title { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color:var(--text); }
+  .nav-sub { font-size:11px; color:var(--text2); margin-top:1px; }
+  .nav-actions { display:flex; align-items:center; gap:10px; }
+  .nav-user { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text2); }
+  .avatar {
+    width:32px; height:32px; border-radius:50%;
+    background: var(--gold); display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-weight:700; font-size:13px; color:var(--navy);
+  }
+  .btn-logout {
+    padding:6px 14px; border-radius:8px;
+    border:1px solid var(--border2); background:transparent;
+    color:var(--text2); font-size:12px; cursor:pointer;
+    transition: all .2s;
+  }
+  .btn-logout:hover { border-color: var(--red); color:var(--red); }
+
+  /* ── SCREENS ── */
+  .screen { display:none; animation: fadeIn .3s ease; }
+  .screen.active { display:block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── LOGIN SCREEN ── */
+  #screen-login {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+  }
+  #screen-login.active { display:flex; }
+  .login-hero {
+    flex:1; display:flex; align-items:center; justify-content:center;
+    padding: 40px 24px;
+    position:relative;
+  }
+  .login-bg-pattern {
+    position:absolute; inset:0;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.015) 40px, rgba(255,255,255,0.015) 41px),
+                      repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,0.015) 40px, rgba(255,255,255,0.015) 41px);
+    pointer-events:none;
+  }
+  .login-card {
+    width: 100%; max-width: 420px;
+    background: var(--navy3);
+    border: 1px solid var(--border2);
+    border-radius: 24px;
+    padding: 40px 36px;
+    position:relative; z-index:1;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  }
+  .login-logo-big {
+    width: 60px; height: 60px; border-radius: 16px;
+    background: var(--gold); display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-weight:800; font-size:24px; color:var(--navy);
+    margin-bottom: 20px;
+  }
+  .login-card h1 { font-family:'Syne',sans-serif; font-weight:800; font-size:26px; color:var(--text); margin-bottom:6px; }
+  .login-card p { font-size:14px; color:var(--text2); margin-bottom:28px; }
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:12px; font-weight:500; color:var(--text2); margin-bottom:6px; letter-spacing:.5px; text-transform:uppercase; }
+  .field input, .field select {
+    width:100%; padding:12px 16px;
+    background: var(--navy4); border:1px solid var(--border2);
+    border-radius: var(--radius-sm); color:var(--text); font-size:14px;
+    font-family:'DM Sans',sans-serif;
+    transition: border-color .2s;
+    outline:none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--gold); }
+  .field select option { background:var(--navy4); }
+  .btn-primary {
+    width:100%; padding:13px; border-radius:var(--radius-sm);
+    background: var(--gold); color:var(--navy);
+    font-family:'Syne',sans-serif; font-weight:700; font-size:15px;
+    border:none; cursor:pointer; transition: all .2s;
+    margin-top:8px;
+  }
+  .btn-primary:hover { background: var(--gold2); transform:translateY(-1px); }
+  .btn-primary:active { transform:translateY(0); }
+  .login-note { font-size:12px; color:var(--text3); text-align:center; margin-top:16px; line-height:1.6; }
+  .login-note a { color:var(--gold); text-decoration:none; }
+  .error-msg { background: var(--red-soft); border:1px solid var(--red); border-radius:8px; padding:10px 14px; font-size:13px; color:var(--red); margin-bottom:14px; display:none; }
+  .error-msg.show { display:block; }
+
+  /* ── MAIN APP ── */
+  #screen-app { min-height:100vh; }
+  #screen-app.active { display:block; }
+  .app-container { max-width: 960px; margin:0 auto; padding: 28px 20px 60px; }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position:fixed; bottom:0; left:0; right:0; z-index:100;
+    background: rgba(17,24,39,0.97);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-around;
+    padding: 8px 0 12px;
+  }
+  .bnav-item {
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:6px 20px; border-radius:10px; cursor:pointer;
+    transition: all .2s; border:none; background:transparent;
+  }
+  .bnav-icon { font-size:20px; line-height:1; }
+  .bnav-label { font-size:10px; color:var(--text3); transition: color .2s; }
+  .bnav-item.active .bnav-label { color:var(--gold); }
+  .bnav-item.active .bnav-icon { filter: drop-shadow(0 0 6px var(--gold)); }
+
+  /* ── PAGES ── */
+  .page { display:none; }
+  .page.active { display:block; animation: fadeIn .25s ease; }
+
+  /* ── DASHBOARD PAGE ── */
+  .page-header { margin-bottom:24px; }
+  .page-header h2 { font-family:'Syne',sans-serif; font-weight:700; font-size:22px; color:var(--text); }
+  .page-header p { font-size:13px; color:var(--text2); margin-top:4px; }
+
+  .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; }
+  .stat-card {
+    background:var(--navy3); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px; text-align:center;
+    transition: transform .2s;
+  }
+  .stat-card:hover { transform:translateY(-2px); }
+  .stat-num { font-family:'Syne',sans-serif; font-weight:800; font-size:28px; margin-bottom:4px; }
+  .stat-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; }
+  .stat-card.green .stat-num { color:var(--green); }
+  .stat-card.orange .stat-num { color:var(--orange); }
+  .stat-card.red .stat-num { color:var(--red); }
+
+  .section-title {
+    font-family:'Syne',sans-serif; font-weight:600; font-size:14px;
+    color:var(--text2); letter-spacing:.5px; text-transform:uppercase;
+    margin-bottom:12px; display:flex; align-items:center; gap:8px;
+  }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  .legend-row { display:flex; gap:16px; margin-bottom:14px; flex-wrap:wrap; }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); }
+  .legend-dot { width:10px; height:10px; border-radius:3px; }
+  .legend-dot.green { background:var(--green); }
+  .legend-dot.orange { background:var(--orange); }
+  .legend-dot.red { background:var(--red); }
+
+  .slot-grid {
+    display:grid; grid-template-columns:repeat(5,1fr); gap:8px;
+    margin-bottom:24px;
+  }
+  .slot-tile {
+    background:var(--navy3); border-radius:10px;
+    padding:10px 6px; text-align:center;
+    border:1px solid var(--border);
+    transition:all .2s; position:relative; overflow:hidden;
+    min-height:70px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  }
+  .slot-tile::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  }
+  .slot-tile.available { border-color:rgba(34,197,94,0.3); }
+  .slot-tile.available::before { background:var(--green); }
+  .slot-tile.pending { border-color:rgba(249,115,22,0.3); }
+  .slot-tile.pending::before { background:var(--orange); }
+  .slot-tile.reserved { border-color:rgba(239,68,68,0.3); }
+  .slot-tile.reserved::before { background:var(--red); }
+  .slot-tile.mine { box-shadow:0 0 0 2px var(--gold); border-color:var(--gold); }
+  .slot-tile.mine::before { background:var(--gold); }
+  .slot-id { font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:var(--text); }
+  .slot-status-dot { width:7px; height:7px; border-radius:50%; }
+  .slot-tile.available .slot-status-dot { background:var(--green); }
+  .slot-tile.pending .slot-status-dot { background:var(--orange); }
+  .slot-tile.reserved .slot-status-dot { background:var(--red); }
+  .slot-tile.mine .slot-status-dot { background:var(--gold); }
+  .slot-type-icon { font-size:16px; }
+
+  /* ── BOOKING PAGE ── */
+  .booking-card {
+    background:var(--navy3); border:1px solid var(--border2);
+    border-radius:20px; padding:24px; margin-bottom:16px;
+  }
+  .booking-card h3 { font-family:'Syne',sans-serif; font-weight:600; font-size:15px; margin-bottom:18px; color:var(--text); }
+  .fields-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .fields-grid .field.full { grid-column:1/-1; }
+
+  .slot-picker-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:16px; }
+  .slot-pick-tile {
+    border-radius:10px; padding:10px 4px; text-align:center;
+    border:1px solid var(--border); cursor:pointer;
+    min-height:64px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    transition:all .2s;
+  }
+  .slot-pick-tile.available {
+    background:var(--navy4); border-color:rgba(34,197,94,0.3); cursor:pointer;
+  }
+  .slot-pick-tile.available:hover { background:var(--green-soft); border-color:var(--green); transform:translateY(-2px); }
+  .slot-pick-tile.taken { background:var(--navy4); opacity:.4; cursor:not-allowed; }
+  .slot-pick-tile.selected { background:var(--gold-soft); border-color:var(--gold); box-shadow:0 0 0 2px var(--gold-glow); }
+  .slot-pick-id { font-family:'Syne',sans-serif; font-weight:700; font-size:11px; color:var(--text); }
+  .slot-pick-status { font-size:9px; color:var(--text3); }
+  .slot-pick-tile.selected .slot-pick-id { color:var(--gold); }
+
+  .confirm-strip {
+    background:var(--gold-soft); border:1px solid var(--gold);
+    border-radius:10px; padding:12px 16px; margin-bottom:16px;
+    display:flex; align-items:center; justify-content:space-between;
+    display:none;
+  }
+  .confirm-strip.show { display:flex; }
+  .confirm-strip span { font-size:13px; color:var(--gold); font-weight:500; }
+  .btn-confirm {
+    padding:10px 24px; border-radius:8px;
+    background:var(--gold); color:var(--navy);
+    font-family:'Syne',sans-serif; font-weight:700; font-size:14px;
+    border:none; cursor:pointer; transition:all .2s; width:100%; margin-top:4px;
+  }
+  .btn-confirm:hover { background:var(--gold2); }
+
+  /* ── MY BOOKING PAGE ── */
+  .receipt-card {
+    background: linear-gradient(135deg, var(--navy3) 0%, var(--navy4) 100%);
+    border:1px solid var(--gold);
+    border-radius:20px; padding:28px; margin-bottom:16px;
+    position:relative; overflow:hidden;
+  }
+  .receipt-card::before {
+    content:'RECEIPT'; position:absolute;
+    top:20px; right:-20px; transform:rotate(45deg);
+    background:var(--gold); color:var(--navy);
+    font-family:'Syne',sans-serif; font-weight:800; font-size:9px;
+    padding:4px 28px; letter-spacing:2px;
+  }
+  .receipt-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+  .receipt-slot-badge {
+    width:56px; height:56px; border-radius:14px;
+    background:var(--gold); display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-weight:800; font-size:13px; color:var(--navy);
+    text-align:center; line-height:1.2;
+  }
+  .receipt-title { font-family:'Syne',sans-serif; font-weight:700; font-size:18px; color:var(--text); }
+  .receipt-sub { font-size:13px; color:var(--text2); margin-top:3px; }
+  .receipt-rows { display:flex; flex-direction:column; gap:8px; }
+  .receipt-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); }
+  .receipt-row:last-child { border:none; }
+  .receipt-key { font-size:12px; color:var(--text3); }
+  .receipt-val { font-size:13px; font-weight:500; color:var(--text); }
+
+  .status-banner {
+    border-radius:12px; padding:14px 18px; margin-bottom:14px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .status-banner.pending { background:var(--orange-soft); border:1px solid var(--orange); }
+  .status-banner.reserved { background:var(--green-soft); border:1px solid var(--green); }
+  .status-banner.expired { background:var(--red-soft); border:1px solid var(--red); }
+  .status-icon { font-size:22px; }
+  .status-text h4 { font-size:14px; font-weight:600; margin-bottom:2px; }
+  .status-banner.pending .status-text h4 { color:var(--orange); }
+  .status-banner.reserved .status-text h4 { color:var(--green); }
+  .status-banner.expired .status-text h4 { color:var(--red); }
+  .status-text p { font-size:12px; color:var(--text2); }
+
+  .timer-section { margin-bottom:14px; }
+  .timer-label { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .timer-label span { font-size:12px; color:var(--text2); }
+  .timer-countdown { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; color:var(--orange); }
+  .timer-track { height:8px; background:var(--navy4); border-radius:4px; overflow:hidden; }
+  .timer-fill { height:100%; background:var(--orange); border-radius:4px; transition:width 1s linear; }
+  .timer-fill.urgent { background:var(--red); animation: pulse .5s infinite alternate; }
+  @keyframes pulse { from { opacity:.7; } to { opacity:1; } }
+
+  .btn-cancel {
+    width:100%; padding:12px; border-radius:10px;
+    background:transparent; border:1px solid var(--red);
+    color:var(--red); font-size:14px; font-weight:500; cursor:pointer;
+    transition:all .2s;
+  }
+  .btn-cancel:hover { background:var(--red-soft); }
+
+  .empty-state {
+    text-align:center; padding:60px 20px;
+  }
+  .empty-icon { font-size:48px; margin-bottom:16px; }
+  .empty-state h3 { font-family:'Syne',sans-serif; font-weight:700; font-size:18px; color:var(--text); margin-bottom:8px; }
+  .empty-state p { font-size:14px; color:var(--text2); margin-bottom:24px; }
+  .btn-go-book {
+    padding:12px 28px; border-radius:10px;
+    background:var(--gold); color:var(--navy);
+    font-family:'Syne',sans-serif; font-weight:700; font-size:14px;
+    border:none; cursor:pointer; transition:all .2s;
+  }
+  .btn-go-book:hover { background:var(--gold2); }
+
+  /* ── TOAST ── */
+  .toast {
+    position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--navy3); border:1px solid var(--border2);
+    border-radius:10px; padding:12px 20px;
+    font-size:13px; color:var(--text); z-index:999;
+    opacity:0; transition:all .3s; pointer-events:none;
+    white-space:nowrap; box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.success { border-color:var(--green); color:var(--green); }
+  .toast.error { border-color:var(--red); color:var(--red); }
+
+  /* ── PROFILE PAGE ── */
+  .profile-card {
+    background:var(--navy3); border:1px solid var(--border2);
+    border-radius:20px; padding:28px; margin-bottom:16px; text-align:center;
+  }
+  .profile-avatar {
+    width:72px; height:72px; border-radius:50%;
+    background:var(--gold); display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-weight:800; font-size:26px; color:var(--navy);
+    margin:0 auto 14px;
+  }
+  .profile-name { font-family:'Syne',sans-serif; font-weight:700; font-size:20px; color:var(--text); margin-bottom:4px; }
+  .profile-id { font-size:13px; color:var(--text2); }
+  .profile-badge {
+    display:inline-block; margin-top:10px; padding:4px 14px;
+    background:var(--gold-soft); border:1px solid var(--gold);
+    border-radius:20px; font-size:12px; color:var(--gold);
+  }
+  .info-list { list-style:none; }
+  .info-list li {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:13px 0; border-bottom:1px solid var(--border);
+    font-size:14px;
+  }
+  .info-list li:last-child { border:none; }
+  .info-list .key { color:var(--text2); }
+  .info-list .val { color:var(--text); font-weight:500; }
+
+  .loading-overlay {
+    position:fixed; inset:0; background:rgba(10,14,26,0.9);
+    display:flex; align-items:center; justify-content:center; z-index:200;
+    flex-direction:column; gap:16px;
+  }
+  .loading-overlay.hidden { display:none; }
+  .spinner {
+    width:40px; height:40px; border:3px solid var(--border2);
+    border-top-color:var(--gold); border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loading-text { font-size:14px; color:var(--text2); }
+
+  @media (max-width:480px) {
+    .fields-grid { grid-template-columns:1fr; }
+    .fields-grid .field.full { grid-column:1; }
+    .slot-grid, .slot-picker-grid { grid-template-columns:repeat(4,1fr); }
+    .login-card { padding:28px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Connecting to MIT AOE Parking...</div>
+</div>
+
+<!-- ── LOGIN ── -->
+<div class="screen active" id="screen-login">
+  <nav>
+    <div class="nav-brand">
+      <div class="nav-logo">M</div>
+      <div><div class="nav-title">MIT AOE Parking</div><div class="nav-sub">Student Portal</div></div>
+    </div>
+  </nav>
+  <div class="login-hero">
+    <div class="login-bg-pattern"></div>
+    <div class="login-card">
+      <div class="login-logo-big">P</div>
+      <h1>Student Login</h1>
+      <p>Sign in with your MIT AOE credentials to book a parking slot.</p>
+      <div class="error-msg" id="loginError"></div>
+      <div class="field"><label>College ID</label><input type="text" id="loginId" placeholder="e.g. MITAOE2024001"/></div>
+      <div class="field"><label>Password</label><input type="password" id="loginPass" placeholder="Enter your password"/></div>
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+      <p class="login-note">
+        Don't have an account? <a href="#" onclick="showRegister()">Register here</a><br/>
+        <span style="color:var(--text3);margin-top:8px;display:block;">Your data is securely stored in our system.</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ── REGISTER MODAL ── -->
+<div id="registerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div class="login-card" style="max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
+    <h1 style="font-size:20px;margin-bottom:6px;">Create Account</h1>
+    <p style="margin-bottom:20px;">Register with your MIT AOE details</p>
+    <div class="error-msg" id="regError"></div>
+    <div class="fields-grid">
+      <div class="field"><label>Full Name</label><input type="text" id="regName" placeholder="Rahul Sharma"/></div>
+      <div class="field"><label>College ID</label><input type="text" id="regCollegeId" placeholder="MITAOE2024001"/></div>
+      <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="rahul@mitaoe.ac.in"/></div>
+      <div class="field"><label>Phone</label><input type="tel" id="regPhone" placeholder="9876543210"/></div>
+      <div class="field"><label>Vehicle Number</label><input type="text" id="regVehicle" placeholder="MH12AB1234"/></div>
+      <div class="field"><label>Vehicle Type</label>
+        <select id="regVtype"><option>Two-Wheeler</option><option>Four-Wheeler</option></select>
+      </div>
+      <div class="field full"><label>Password</label><input type="password" id="regPass" placeholder="Create a strong password"/></div>
+    </div>
+    <button class="btn-primary" onclick="doRegister()">Create Account</button>
+    <p class="login-note" style="margin-top:12px;"><a href="#" onclick="hideRegister()">← Back to Login</a></p>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div class="screen" id="screen-app">
+  <nav>
+    <div class="nav-brand">
+      <div class="nav-logo">M</div>
+      <div><div class="nav-title">MIT AOE Parking</div><div class="nav-sub">Student Portal</div></div>
+    </div>
+    <div class="nav-actions">
+      <div class="nav-user"><span id="navUserName"></span><div class="avatar" id="navAvatar">R</div></div>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="app-container" style="padding-bottom:100px;">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h2>Parking Dashboard</h2>
+        <p id="dashGreeting">Welcome back! Here's today's parking status.</p>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card green"><div class="stat-num" id="statAvail">—</div><div class="stat-label">Available</div></div>
+        <div class="stat-card orange"><div class="stat-num" id="statPend">—</div><div class="stat-label">Pending</div></div>
+        <div class="stat-card red"><div class="stat-num" id="statRes">—</div><div class="stat-label">Reserved</div></div>
+      </div>
+      <div class="section-title">Live Slot Map</div>
+      <div class="legend-row">
+        <div class="legend-item"><div class="legend-dot green"></div>Available</div>
+        <div class="legend-item"><div class="legend-dot orange"></div>Pending</div>
+        <div class="legend-item"><div class="legend-dot red"></div>Reserved</div>
+        <div class="legend-item" style="color:var(--gold);"><span style="font-size:10px;border:1px solid var(--gold);border-radius:3px;padding:0 4px;margin-right:4px;">★</span>Your Slot</div>
+      </div>
+      <div class="slot-grid" id="dashGrid"></div>
+      <div class="section-title">Parking Area Info</div>
+      <div style="background:var(--navy3);border:1px solid var(--border);border-radius:14px;padding:18px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
+          <div><span style="color:var(--text2);">Location</span><br/><span style="font-weight:500;">MIT AOE Main Campus</span></div>
+          <div><span style="color:var(--text2);">Total Slots</span><br/><span style="font-weight:500;">20 Slots</span></div>
+          <div><span style="color:var(--text2);">Operating Hours</span><br/><span style="font-weight:500;">7:00 AM – 9:00 PM</span></div>
+          <div><span style="color:var(--text2);">Booking Window</span><br/><span style="font-weight:500;">10 min to arrive</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOK SLOT -->
+    <div class="page" id="page-book">
+      <div class="page-header">
+        <h2>Book a Slot</h2>
+        <p>Select a slot and confirm your booking below.</p>
+      </div>
+      <div class="booking-card">
+        <h3>Your Details (auto-filled)</h3>
+        <div class="fields-grid">
+          <div class="field"><label>Full Name</label><input type="text" id="bName" readonly style="opacity:.7;cursor:not-allowed;"/></div>
+          <div class="field"><label>College ID</label><input type="text" id="bCollegeId" readonly style="opacity:.7;cursor:not-allowed;"/></div>
+          <div class="field"><label>Vehicle Number</label><input type="text" id="bVehicle" readonly style="opacity:.7;cursor:not-allowed;"/></div>
+          <div class="field"><label>Vehicle Type</label><input type="text" id="bVtype" readonly style="opacity:.7;cursor:not-allowed;"/></div>
+        </div>
+      </div>
+      <div class="booking-card">
+        <h3>Select Available Slot</h3>
+        <div class="slot-picker-grid" id="bookGrid"></div>
+        <div class="confirm-strip" id="confirmStrip">
+          <span id="confirmStripText">Slot selected</span>
+        </div>
+        <div id="bookAlert" style="margin-bottom:12px;"></div>
+        <button class="btn-confirm" onclick="confirmBooking()">Confirm Booking</button>
+      </div>
+    </div>
+
+    <!-- MY BOOKING -->
+    <div class="page" id="page-mybooking">
+      <div class="page-header">
+        <h2>My Booking</h2>
+        <p>Your active parking reservation.</p>
+      </div>
+      <div id="noBookingState">
+        <div class="empty-state">
+          <div class="empty-icon">🅿️</div>
+          <h3>No Active Booking</h3>
+          <p>You haven't booked a parking slot yet. Reserve one now!</p>
+          <button class="btn-go-book" onclick="switchPage('book')">Book a Slot</button>
+        </div>
+      </div>
+      <div id="activeBookingState" style="display:none;">
+        <div id="statusBanner"></div>
+        <div class="timer-section" id="timerSection" style="display:none;">
+          <div style="background:var(--navy3);border:1px solid var(--border);border-radius:14px;padding:18px;">
+            <div class="timer-label">
+              <span>Time remaining to arrive</span>
+              <span class="timer-countdown" id="timerDisplay">10:00</span>
+            </div>
+            <div class="timer-track"><div class="timer-fill" id="timerFill" style="width:100%;"></div></div>
+          </div>
+        </div>
+        <div class="receipt-card">
+          <div class="receipt-header">
+            <div class="receipt-slot-badge" id="receiptSlotBadge">A-01</div>
+            <div>
+              <div class="receipt-title">Parking Confirmed</div>
+              <div class="receipt-sub">MIT AOE Campus Parking</div>
+            </div>
+          </div>
+          <div class="receipt-rows" id="receiptRows"></div>
+        </div>
+        <button class="btn-cancel" onclick="cancelBooking()">Cancel Booking</button>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page" id="page-profile">
+      <div class="page-header"><h2>My Profile</h2></div>
+      <div class="profile-card">
+        <div class="profile-avatar" id="profileAvatar">R</div>
+        <div class="profile-name" id="profileName">—</div>
+        <div class="profile-id" id="profileId">—</div>
+        <div class="profile-badge">MIT AOE Student</div>
+      </div>
+      <div class="booking-card">
+        <h3>Account Information</h3>
+        <ul class="info-list" id="profileList"></ul>
+      </div>
+      <button class="btn-cancel" style="margin-top:8px;" onclick="doLogout()">Sign Out</button>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="bnav-item active" onclick="switchPage('dashboard')" id="bnav-dashboard">
+      <span class="bnav-icon">🏠</span><span class="bnav-label">Dashboard</span>
+    </button>
+    <button class="bnav-item" onclick="switchPage('book')" id="bnav-book">
+      <span class="bnav-icon">➕</span><span class="bnav-label">Book</span>
+    </button>
+    <button class="bnav-item" onclick="switchPage('mybooking')" id="bnav-mybooking">
+      <span class="bnav-icon">🎫</span><span class="bnav-label">My Booking</span>
+    </button>
+    <button class="bnav-item" onclick="switchPage('profile')" id="bnav-profile">
+      <span class="bnav-icon">👤</span><span class="bnav-label">Profile</span>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ── FIREBASE CONFIG — Replace with your own ──
+const firebaseConfig = {
+  apiKey: "AIzaSyCelnCKU9JBCz1CUf_NviiW1KWUXB8Za3M",
+  authDomain: "mitaoe-parking.firebaseapp.com",
+  projectId: "mitaoe-parking",
+  storageBucket: "mitaoe-parking.firebasestorage.app",
+  messagingSenderId: "875899575922",
+  appId: "1:875899575922:web:1cd7ec6adc6f0edfa92ceb",
+  measurementId: "G-ER04PZ7NKN"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ── STATE ──
+const TOTAL_SLOTS = 20;
+const TIMEOUT = 600;
+let currentUser = null;
+let slotsData = {};
+let timerInterval = null;
+let selectedSlot = null;
+let timerRemaining = TIMEOUT;
+
+// ── INIT ──
+window.addEventListener('load', async () => {
+  const saved = localStorage.getItem('mitaoe_user');
+  if (saved) {
+    currentUser = JSON.parse(saved);
+    showApp();
+  }
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  initSlotsListener();
+});
+
+function initSlotsListener() {
+  const slotsRef = ref(db, 'slots');
+  onValue(slotsRef, snap => {
+    slotsData = snap.val() || {};
+    if (!slotsData || Object.keys(slotsData).length === 0) initDefaultSlots();
+    else { renderDashGrid(); renderBookGrid(); updateStats(); checkMyBooking(); }
+  });
+}
+
+async function initDefaultSlots() {
+  const batch = {};
+  for (let i = 1; i <= TOTAL_SLOTS; i++) {
+    const id = 'A' + String(i).padStart(2,'0');
+    batch[id] = { status: 'available', student: null, college_id: null, vehicle: null, vehicle_type: null, booked_at: null };
+  }
+  await set(ref(db, 'slots'), batch);
+}
+
+// ── AUTH ──
+window.doLogin = async () => {
+  const id = document.getElementById('loginId').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  const errEl = document.getElementById('loginError');
+  errEl.classList.remove('show');
+  if (!id || !pass) { errEl.textContent='Please fill all fields.'; errEl.classList.add('show'); return; }
+  try {
+    const snap = await get(ref(db, 'students/' + id));
+    if (!snap.exists()) { errEl.textContent='College ID not found. Please register.'; errEl.classList.add('show'); return; }
+    const student = snap.val();
+    if (student.password !== pass) { errEl.textContent='Incorrect password.'; errEl.classList.add('show'); return; }
+    currentUser = { ...student, college_id: id };
+    localStorage.setItem('mitaoe_user', JSON.stringify(currentUser));
+    showApp();
+  } catch(e) {
+    errEl.textContent='Connection error. Check Firebase config.'; errEl.classList.add('show');
+  }
+};
+
+window.doRegister = async () => {
+  const name = document.getElementById('regName').value.trim();
+  const cid = document.getElementById('regCollegeId').value.trim().toUpperCase();
+  const email = document.getElementById('regEmail').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const vehicle = document.getElementById('regVehicle').value.trim().toUpperCase();
+  const vtype = document.getElementById('regVtype').value;
+  const pass = document.getElementById('regPass').value.trim();
+  const errEl = document.getElementById('regError');
+  errEl.classList.remove('show');
+  if (!name||!cid||!email||!phone||!vehicle||!pass) { errEl.textContent='Please fill all fields.'; errEl.classList.add('show'); return; }
+  try {
+    const existing = await get(ref(db, 'students/'+cid));
+    if (existing.exists()) { errEl.textContent='This College ID is already registered.'; errEl.classList.add('show'); return; }
+    await set(ref(db, 'students/'+cid), { name, email, phone, vehicle, vehicle_type: vtype, password: pass });
+    currentUser = { name, email, phone, vehicle, vehicle_type: vtype, college_id: cid };
+    localStorage.setItem('mitaoe_user', JSON.stringify(currentUser));
+    hideRegister();
+    showApp();
+    showToast('Account created! Welcome ' + name, 'success');
+  } catch(e) {
+    errEl.textContent='Registration failed. Check Firebase config.'; errEl.classList.add('show');
+  }
+};
+
+window.doLogout = () => {
+  localStorage.removeItem('mitaoe_user');
+  currentUser = null;
+  selectedSlot = null;
+  if (timerInterval) clearInterval(timerInterval);
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+  switchPage('dashboard');
+};
+
+function showApp() {
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+  document.getElementById('navUserName').textContent = currentUser.name.split(' ')[0];
+  document.getElementById('navAvatar').textContent = currentUser.name[0].toUpperCase();
+  document.getElementById('dashGreeting').textContent = 'Welcome, ' + currentUser.name.split(' ')[0] + '! Here\'s today\'s parking status.';
+  document.getElementById('bName').value = currentUser.name;
+  document.getElementById('bCollegeId').value = currentUser.college_id;
+  document.getElementById('bVehicle').value = currentUser.vehicle;
+  document.getElementById('bVtype').value = currentUser.vehicle_type;
+  renderProfile();
+}
+
+window.showRegister = () => { document.getElementById('registerModal').style.display='flex'; };
+window.hideRegister = () => { document.getElementById('registerModal').style.display='none'; };
+
+// ── SLOT RENDERING ──
+function renderDashGrid() {
+  const grid = document.getElementById('dashGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 1; i <= TOTAL_SLOTS; i++) {
+    const id = 'A'+String(i).padStart(2,'0');
+    const slot = slotsData[id] || { status:'available' };
+    const isMine = currentUser && slot.college_id === currentUser.college_id;
+    const cls = isMine ? 'mine' : slot.status;
+    const icon = slot.vehicle_type === 'Four-Wheeler' ? '🚗' : (slot.status === 'available' ? '' : '🛵');
+    const div = document.createElement('div');
+    div.className = `slot-tile ${cls}`;
+    div.innerHTML = `<div class="slot-id">${id}</div><div class="slot-status-dot"></div>${icon?`<div style="font-size:13px;">${icon}</div>`:''}`;
+    div.title = isMine ? 'Your Slot' : (slot.student || slot.status);
+    grid.appendChild(div);
+  }
+}
+
+function renderBookGrid() {
+  const grid = document.getElementById('bookGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 1; i <= TOTAL_SLOTS; i++) {
+    const id = 'A'+String(i).padStart(2,'0');
+    const slot = slotsData[id] || { status:'available' };
+    const isAvail = slot.status === 'available';
+    const isSelected = selectedSlot === id;
+    const div = document.createElement('div');
+    div.className = `slot-pick-tile ${isAvail ? 'available' : 'taken'} ${isSelected ? 'selected' : ''}`;
+    div.innerHTML = `<div class="slot-pick-id">${id}</div><div class="slot-pick-status">${isAvail ? 'Free' : slot.status}</div>`;
+    if (isAvail) div.onclick = () => selectSlot(id);
+    grid.appendChild(div);
+  }
+  const strip = document.getElementById('confirmStrip');
+  if (selectedSlot) {
+    strip.classList.add('show');
+    document.getElementById('confirmStripText').textContent = `Selected: Slot ${selectedSlot}`;
+  } else { strip.classList.remove('show'); }
+}
+
+function updateStats() {
+  let a=0,p=0,r=0;
+  Object.values(slotsData).forEach(s => {
+    if (s.status==='available') a++;
+    else if (s.status==='pending') p++;
+    else if (s.status==='reserved') r++;
+  });
+  document.getElementById('statAvail').textContent = a;
+  document.getElementById('statPend').textContent = p;
+  document.getElementById('statRes').textContent = r;
+}
+
+function selectSlot(id) {
+  selectedSlot = id;
+  renderBookGrid();
+}
+
+// ── BOOKING ──
+window.confirmBooking = async () => {
+  if (!selectedSlot) { showAlert('bookAlert','Please select a slot first.','warn'); return; }
+  const slot = slotsData[selectedSlot];
+  if (!slot || slot.status !== 'available') { showAlert('bookAlert','Slot no longer available!','error'); selectedSlot=null; renderBookGrid(); return; }
+  if (!currentUser) return;
+
+  // Check if user already has a booking
+  const existing = Object.values(slotsData).find(s => s.college_id === currentUser.college_id && (s.status==='pending'||s.status==='reserved'));
+  if (existing) { showAlert('bookAlert','You already have an active booking!','warn'); return; }
+
+  const booked_at = Date.now();
+  await update(ref(db, 'slots/'+selectedSlot), {
+    status: 'pending',
+    student: currentUser.name,
+    college_id: currentUser.college_id,
+    vehicle: currentUser.vehicle,
+    vehicle_type: currentUser.vehicle_type,
+    booked_at
+  });
+  selectedSlot = null;
+  showToast('Slot booked! You have 10 minutes to arrive.', 'success');
+  switchPage('mybooking');
+};
+
+window.cancelBooking = async () => {
+  if (!currentUser) return;
+  const mySlotId = findMySlot();
+  if (!mySlotId) return;
+  if (timerInterval) clearInterval(timerInterval);
+  await update(ref(db, 'slots/'+mySlotId), { status:'available', student:null, college_id:null, vehicle:null, vehicle_type:null, booked_at:null });
+  showToast('Booking cancelled.', 'error');
+};
+
+function findMySlot() {
+  if (!currentUser) return null;
+  return Object.keys(slotsData).find(k => slotsData[k].college_id === currentUser.college_id && (slotsData[k].status==='pending'||slotsData[k].status==='reserved'));
+}
+
+function checkMyBooking() {
+  const mySlotId = findMySlot();
+  const noState = document.getElementById('noBookingState');
+  const activeState = document.getElementById('activeBookingState');
+  if (!mySlotId) {
+    if (noState) noState.style.display='block';
+    if (activeState) activeState.style.display='none';
+    if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
+    return;
+  }
+  if (noState) noState.style.display='none';
+  if (activeState) activeState.style.display='block';
+  const slot = slotsData[mySlotId];
+  renderReceipt(mySlotId, slot);
+  if (slot.status==='pending') {
+    startTimer(slot.booked_at);
+    renderStatusBanner('pending');
+  } else {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
+    const ts = document.getElementById('timerSection');
+    if (ts) ts.style.display='none';
+    renderStatusBanner('reserved');
+  }
+}
+
+function renderReceipt(slotId, slot) {
+  const badge = document.getElementById('receiptSlotBadge');
+  if (badge) badge.textContent = slotId;
+  const rows = document.getElementById('receiptRows');
+  if (!rows) return;
+  const dt = slot.booked_at ? new Date(slot.booked_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : '—';
+  rows.innerHTML = `
+    <div class="receipt-row"><span class="receipt-key">Slot Number</span><span class="receipt-val">${slotId}</span></div>
+    <div class="receipt-row"><span class="receipt-key">Student</span><span class="receipt-val">${slot.student||'—'}</span></div>
+    <div class="receipt-row"><span class="receipt-key">College ID</span><span class="receipt-val">${slot.college_id||'—'}</span></div>
+    <div class="receipt-row"><span class="receipt-key">Vehicle</span><span class="receipt-val">${slot.vehicle||'—'}</span></div>
+    <div class="receipt-row"><span class="receipt-key">Vehicle Type</span><span class="receipt-val">${slot.vehicle_type||'—'}</span></div>
+    <div class="receipt-row"><span class="receipt-key">Booked At</span><span class="receipt-val">${dt}</span></div>
+    <div class="receipt-row"><span class="receipt-key">Status</span><span class="receipt-val" style="color:${slot.status==='reserved'?'var(--green)':'var(--orange)'};">${slot.status.charAt(0).toUpperCase()+slot.status.slice(1)}</span></div>
+  `;
+}
+
+function renderStatusBanner(status) {
+  const el = document.getElementById('statusBanner');
+  if (!el) return;
+  const msgs = {
+    pending: { icon:'⏳', title:'Pending — On Your Way', desc:'Show this receipt to the security guard on arrival.' },
+    reserved: { icon:'✅', title:'Reserved — You\'re Parked!', desc:'Your slot has been confirmed by the security guard.' },
+    expired: { icon:'❌', title:'Booking Expired', desc:'You did not arrive in time. Please book again.' }
+  };
+  const m = msgs[status];
+  el.innerHTML = `<div class="status-banner ${status}"><div class="status-icon">${m.icon}</div><div class="status-text"><h4>${m.title}</h4><p>${m.desc}</p></div></div>`;
+}
+
+function startTimer(bookedAt) {
+  if (timerInterval) clearInterval(timerInterval);
+  const ts = document.getElementById('timerSection');
+  if (ts) ts.style.display='block';
+
+  function tick() {
+    const elapsed = Math.floor((Date.now() - bookedAt) / 1000);
+    const remaining = Math.max(0, TIMEOUT - elapsed);
+    timerRemaining = remaining;
+    const mins = Math.floor(remaining/60);
+    const secs = remaining%60;
+    const disp = document.getElementById('timerDisplay');
+    const fill = document.getElementById('timerFill');
+    if (disp) disp.textContent = `${mins}:${String(secs).padStart(2,'0')}`;
+    if (fill) {
+      fill.style.width = (remaining/TIMEOUT*100)+'%';
+      fill.className = 'timer-fill' + (remaining < 120 ? ' urgent' : '');
+    }
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      expireBooking();
+    }
+  }
+  tick();
+  timerInterval = setInterval(tick, 1000);
+}
+
+async function expireBooking() {
+  const mySlotId = findMySlot();
+  if (!mySlotId) return;
+  const slot = slotsData[mySlotId];
+  if (slot && slot.status === 'pending') {
+    await update(ref(db, 'slots/'+mySlotId), { status:'available', student:null, college_id:null, vehicle:null, vehicle_type:null, booked_at:null });
+    showToast('Time expired! Your slot has been released.', 'error');
+  }
+}
+
+// ── PROFILE ──
+function renderProfile() {
+  if (!currentUser) return;
+  const a = document.getElementById('profileAvatar');
+  const n = document.getElementById('profileName');
+  const i = document.getElementById('profileId');
+  const l = document.getElementById('profileList');
+  if (a) a.textContent = currentUser.name[0].toUpperCase();
+  if (n) n.textContent = currentUser.name;
+  if (i) i.textContent = currentUser.college_id;
+  if (l) l.innerHTML = `
+    <li><span class="key">Email</span><span class="val">${currentUser.email||'—'}</span></li>
+    <li><span class="key">Phone</span><span class="val">${currentUser.phone||'—'}</span></li>
+    <li><span class="key">Vehicle</span><span class="val">${currentUser.vehicle||'—'}</span></li>
+    <li><span class="key">Vehicle Type</span><span class="val">${currentUser.vehicle_type||'—'}</span></li>
+    <li><span class="key">College ID</span><span class="val">${currentUser.college_id||'—'}</span></li>
+  `;
+}
+
+// ── NAVIGATION ──
+window.switchPage = (page) => {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('bnav-'+page).classList.add('active');
+  if (page==='mybooking') checkMyBooking();
+  if (page==='book') renderBookGrid();
+  if (page==='profile') renderProfile();
+};
+
+// ── UTILS ──
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  const colors = { warn:'var(--orange-soft);border-color:var(--orange);color:var(--orange)', error:'var(--red-soft);border-color:var(--red);color:var(--red)' };
+  el.innerHTML = `<div style="background:${colors[type]};border:1px solid;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;">${msg}</div>`;
+  setTimeout(() => el.innerHTML='', 3000);
+}
+</script>
+</body>
+</html>
